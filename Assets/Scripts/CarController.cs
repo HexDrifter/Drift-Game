@@ -23,7 +23,20 @@ public class CarController : MonoBehaviour
     [SerializeField] public float engineForce;
     [SerializeField] public float brakeForce;
     [SerializeField] public float maxAngle;
+    [SerializeField] public float convergencyAngle;
     public Vector2 playerInput;
+
+    public float getSpeed()
+    {
+        float pi = Mathf.PI;
+        float rpmAxle = (frontLeftTireCollider.rpm + frontRightTireCollider.rpm)/2f;
+        float wheelDiameter = frontLeftTireCollider.radius * 2f;
+
+        float metersPerSecond = (pi * wheelDiameter * rpmAxle) / 60f;
+        float kilometersPerHours = metersPerSecond * 3.6f;
+        return kilometersPerHours;
+    }
+
     void Start()
     {
         
@@ -36,10 +49,33 @@ public class CarController : MonoBehaviour
         playerInput.y = Input.GetAxis("Vertical");
 
 
-        rearLeftTireCollider.motorTorque = engineForce * playerInput.y;
-        rearRightTireCollider.motorTorque = engineForce * playerInput.y;
-        frontLeftTireCollider.steerAngle = maxAngle * playerInput.x;
-        frontRightTireCollider.steerAngle = maxAngle * playerInput.x;
+
+        if (playerInput.y >= 0)
+        {
+            rearLeftTireCollider.motorTorque = engineForce * playerInput.y;
+            rearRightTireCollider.motorTorque = engineForce * playerInput.y;
+        }
+        else
+        {
+            rearLeftTireCollider.motorTorque = engineForce * 0;
+            rearRightTireCollider.motorTorque = engineForce * 0;
+        }
+        if (playerInput.y < 0)
+        {
+            frontLeftTireCollider.brakeTorque = brakeForce * playerInput.y * -1f;
+            frontRightTireCollider.brakeTorque = brakeForce * playerInput.y * -1f;
+            rearLeftTireCollider.brakeTorque = brakeForce * playerInput.y * -1f;
+            rearRightTireCollider.brakeTorque = brakeForce * playerInput.y * -1f;
+        }
+        else
+        {
+            frontLeftTireCollider.brakeTorque = 0;
+            frontRightTireCollider.brakeTorque = 0;
+            rearLeftTireCollider.brakeTorque = 0;
+            rearRightTireCollider.brakeTorque = 0;
+        }
+        frontLeftTireCollider.steerAngle = (maxAngle * playerInput.x) + convergencyAngle;
+        frontRightTireCollider.steerAngle = (maxAngle * playerInput.x) - convergencyAngle;
         updateVisualModels();
         
     }
